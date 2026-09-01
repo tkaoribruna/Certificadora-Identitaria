@@ -1,4 +1,4 @@
-# Certificadora-Identitaria
+# Certificadora de Competência Identitária
 
 ### Integrantes
 
