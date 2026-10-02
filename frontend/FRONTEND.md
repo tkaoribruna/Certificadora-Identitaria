@@ -1,1 +1,0 @@
-Esse é o diretório do Front End
