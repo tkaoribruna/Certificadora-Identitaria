@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -26,9 +28,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="pt-BR"
-        className={`${plusJakartaSans.variable} ${jetBrainsMono.variable} ${inter.variable} h-full antialiased`}
+      className={`${plusJakartaSans.variable} ${jetBrainsMono.variable} ${inter.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <Navbar></Navbar>
+        {children}
+        <Footer></Footer>
+      </body>
     </html>
   );
 }
