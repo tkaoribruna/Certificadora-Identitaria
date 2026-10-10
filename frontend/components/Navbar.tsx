@@ -4,7 +4,7 @@ import { Container } from "./Container";
 export function Navbar() {
   return (
     <nav>
-    <Container>
+      <Container>
         <div className="flex items-center justify-between">
           <Image src="/logo.png" alt="Logo" width={120} height={40} priority />
           <div className="flex gap-6 p-3">
@@ -25,7 +25,7 @@ export function Navbar() {
             </a>
           </div>
         </div>
-    </Container>
+      </Container>
     </nav>
   );
 }
