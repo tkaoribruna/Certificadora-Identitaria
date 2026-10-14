@@ -1,0 +1,119 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+//schema.prisma
+
+model User {
+  id Int @id @default(autoincrement())
+  name String
+  email String @unique
+  passwordHash String
+  role UserRole
+
+  modules Module[]
+
+  discussionTopics DiscussionTopic[]
+
+  submissions CommunitySubmission[] @relation("Submissions")
+  moderations CommunitySubmission[] @relation("Moderations")
+
+  comments Comment[]
+}
+
+enum UserRole {
+  STUDENT
+  ADMIN
+}
+
+model Module {
+  id Int @id @default(autoincrement())
+  title String
+  description String
+
+  materials LearningMaterial[]
+
+  userId Int
+  user User @relation(fields: [userId], references: [id])
+}
+
+model LearningMaterial {
+  id Int @id @default(autoincrement())
+  title String
+  url String
+  type MaterialType
+
+  moduleId Int
+  module Module @relation(fields: [moduleId], references: [id])
+
+  comments Comment[]
+}
+
+enum MaterialType{
+  VIDEO
+  SLIDE
+  DOCUMENT
+}
+
+model DiscussionTopic {
+  id Int @id @default(autoincrement())
+  title String
+  description String
+  createdAt DateTime @default(now())
+
+  userId Int
+  user User @relation(fields: [userId], references: [id])
+
+  submissions CommunitySubmission[]
+
+  comments Comment[]
+}
+
+model CommunitySubmission {
+  id Int @id @default(autoincrement())
+  title String
+  url String
+  status SubmissionStatus
+  createdAt DateTime @default(now())
+
+  userId Int
+  user User @relation("Submissions", fields: [userId], references: [id])
+
+  moderatorId Int?
+  moderator User? @relation("Moderations", fields: [moderatorId], references: [id])
+
+  discussionTopicId Int
+  discussionTopic DiscussionTopic @relation(fields: [discussionTopicId], references: [id])
+}
+
+enum SubmissionStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Comment {
+  id Int @id @default(autoincrement())
+  content String
+  createdAt DateTime @default(now())
+
+  userId Int
+  user User @relation(fields: [userId], references: [id])
+
+  learningMaterialId Int?
+  learningMaterial LearningMaterial? @relation(fields: [learningMaterialId], references: [id])
+
+  discussionTopicId Int?
+  discussionTopic DiscussionTopic? @relation(fields: [discussionTopicId], references: [id])
+}
+
