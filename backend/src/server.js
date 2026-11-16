@@ -1,22 +1,41 @@
 
-// server.js => Inicializa o servidor Express e registra as rotas da API.
+// server.js => Inicializa o Express, configura os middlewares e registra as rotas e a documentação da API.
 
 const express = require('express');
+const cors = require('cors');
+const swaggerUi = require('swagger-ui-express');
+
+const swaggerSpec = require('./config/swagger');
 
 const healthRoutes = require('./routes/healthRoutes');
 const userRoutes = require('./routes/userRoutes');
 const moduleRoutes = require('./routes/moduleRoutes');
+const learningMaterialRoutes = require('./routes/learningMaterialRoutes');
+const discussionTopicRoutes = require('./routes/discussionTopicRoutes');
+const commentRoutes = require('./routes/commentRoutes');
+const communitySubmissionRoutes = require('./routes/communitySubmissionRoutes');
 
 const app = express();
-const PORT = 3001;
+
+const PORT = process.env.PORT || 3001;
+
+// Permite requisições do frontend
+app.use(cors());
 
 // Permite receber dados JSON
 app.use(express.json());
+
+// Disponibiliza a documentação Swagger
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Registra as rotas da aplicação
 app.use(healthRoutes);
 app.use(userRoutes);
 app.use(moduleRoutes);
+app.use(learningMaterialRoutes);
+app.use(discussionTopicRoutes);
+app.use(commentRoutes);
+app.use(communitySubmissionRoutes);
 
 // Inicia o servidor
 app.listen(PORT, () => {

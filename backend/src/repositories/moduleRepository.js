@@ -1,5 +1,5 @@
 
-// moduleRepository.js => Realiza operações de cadastro e consulta dos módulos no MySQL.
+// moduleRepository.js => Realiza as operações de cadastro, consulta, atualização e exclusão dos módulos no MySQL.
 
 const prisma = require('../config/prisma');
 
@@ -10,7 +10,7 @@ async function create(data) {
     });
 }
 
-// Lista todos os módulos
+// Lista todos os módulos cadastrados
 async function findAll() {
     return prisma.module.findMany({
         orderBy: {
@@ -22,12 +22,35 @@ async function findAll() {
 // Busca um módulo pelo ID
 async function findById(id) {
     return prisma.module.findUnique({
-        where: { id }
+        where: {
+            id
+        }
+    });
+}
+
+// Atualiza os dados de um módulo
+async function update(id, data) {
+    return prisma.module.update({
+        where: {
+            id
+        },
+        data
+    });
+}
+
+// Exclui um módulo
+async function remove(id) {
+    return prisma.module.delete({
+        where: {
+            id
+        }
     });
 }
 
 module.exports = {
     create,
     findAll,
-    findById
+    findById,
+    update,
+    remove
 };

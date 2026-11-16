@@ -1,5 +1,5 @@
 
-// moduleController.js => Controla as requisições HTTP relacionadas aos módulos de ensino.
+// moduleController.js => Controla as requisições HTTP de cadastro, consulta, atualização e exclusão dos módulos.
 
 const moduleService = require('../services/moduleService');
 
@@ -16,8 +16,14 @@ async function createModule(req, res) {
 
         return res.status(201).json(module);
     } catch (error) {
-        return res.status(400).json({
-            error: error.message
+        if (error.message === 'Título e descrição são obrigatórios.') {
+            return res.status(400).json({
+                error: error.message
+            });
+        }
+
+        return res.status(500).json({
+            error: 'Erro interno ao cadastrar o módulo.'
         });
     }
 }
@@ -39,7 +45,6 @@ async function listModules(req, res) {
 async function getModuleById(req, res) {
     try {
         const id = Number(req.params.id);
-
         const module = await moduleService.getModuleById(id);
 
         return res.status(200).json(module);
@@ -62,8 +67,80 @@ async function getModuleById(req, res) {
     }
 }
 
+// Atualiza um módulo
+async function updateModule(req, res) {
+    try {
+        const id = Number(req.params.id);
+        const { title, description } = req.body;
+
+        const module = await moduleService.updateModule(id, {
+            title,
+            description
+        });
+
+        return res.status(200).json(module);
+    } catch (error) {
+        if (
+            error.message === 'ID do módulo inválido.' ||
+            error.message === 'Título e descrição são obrigatórios.'
+        ) {
+            return res.status(400).json({
+                error: error.message
+            });
+        }
+
+        if (error.message === 'Módulo não encontrado.') {
+            return res.status(404).json({
+                error: error.message
+            });
+        }
+
+        return res.status(500).json({
+            error: 'Erro interno ao atualizar o módulo.'
+        });
+    }
+}
+
+// Exclui um módulo
+async function deleteModule(req, res) {
+    try {
+        const id = Number(req.params.id);
+
+        await moduleService.deleteModule(id);
+
+        return res.status(204).send();
+    } catch (error) {
+        if (error.message === 'ID do módulo inválido.') {
+            return res.status(400).json({
+                error: error.message
+            });
+        }
+
+        if (error.message === 'Módulo não encontrado.') {
+            return res.status(404).json({
+                error: error.message
+            });
+        }
+
+        if (
+            error.message ===
+            'Não é possível excluir um módulo que possui materiais vinculados.'
+        ) {
+            return res.status(409).json({
+                error: error.message
+            });
+        }
+
+        return res.status(500).json({
+            error: 'Erro interno ao excluir o módulo.'
+        });
+    }
+}
+
 module.exports = {
     createModule,
     listModules,
-    getModuleById
+    getModuleById,
+    updateModule,
+    deleteModule
 };

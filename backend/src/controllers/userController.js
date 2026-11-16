@@ -1,5 +1,5 @@
 
-// userController.js
+// userController.js => Controla o cadastro e login, retornando os códigos HTTP adequados.
 
 const userService = require('../services/userService');
 const tokenService = require('../services/tokenService');
@@ -7,7 +7,7 @@ const tokenService = require('../services/tokenService');
 // Controlador de cadastro
 async function createUser(req, res) {
     try {
-        const { name, email, password } = req.body;
+        const { name, email, password } = req.body || {};
 
         const user = await userService.createUser({
             name,
@@ -18,8 +18,16 @@ async function createUser(req, res) {
         return res.status(201).json(user);
 
     } catch (error) {
-        return res.status(400).json({
-            error: error.message
+        if (error.statusCode) {
+            return res.status(error.statusCode).json({
+                error: error.message
+            });
+        }
+
+        console.error('Erro interno no cadastro:', error);
+
+        return res.status(500).json({
+            error: 'Erro interno ao cadastrar usuário.'
         });
     }
 }
@@ -27,7 +35,7 @@ async function createUser(req, res) {
 // Controlador de login
 async function loginUser(req, res) {
     try {
-        const { email, password } = req.body;
+        const { email, password } = req.body || {};
 
         const user = await userService.loginUser({
             email,
@@ -43,8 +51,16 @@ async function loginUser(req, res) {
         });
 
     } catch (error) {
-        return res.status(401).json({
-            error: 'E-mail ou senha inválidos.'
+        if (error.statusCode) {
+            return res.status(error.statusCode).json({
+                error: error.message
+            });
+        }
+
+        console.error('Erro interno no login:', error);
+
+        return res.status(500).json({
+            error: 'Erro interno ao realizar login.'
         });
     }
 }
