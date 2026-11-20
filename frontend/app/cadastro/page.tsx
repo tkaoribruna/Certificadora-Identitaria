@@ -2,14 +2,18 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Container } from "@/components/Container";
 import { Card } from "@/components/Card";
 import { Badge } from "@/components/Badge";
 import { Input } from "@/components/Input";
 import { Button } from "@/components/Button";
 import { Alert } from "@/components/Alert";
+import { api } from "@/lib/api";
+import { salvarSessao } from "@/lib/auth";
 
 export default function CadastroPage() {
+  const router = useRouter();
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
@@ -17,7 +21,7 @@ export default function CadastroPage() {
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setErro("");
 
@@ -48,13 +52,18 @@ export default function CadastroPage() {
 
     setCarregando(true);
 
-    // O cadastro real será implementado na integração com a API.
-    setTimeout(() => {
+    try {
+      await api.cadastrar(nome.trim(), email.trim(), senha);
+
+      // Já faz o login automaticamente depois de cadastrar
+      const { user, token } = await api.login(email.trim(), senha);
+      salvarSessao(token, user);
+      router.push("/ensino");
+    } catch (e) {
+      setErro(e instanceof Error ? e.message : "Erro ao cadastrar.");
+    } finally {
       setCarregando(false);
-      setErro(
-        "O cadastro ainda não está disponível. A integração com o servidor será implementada posteriormente.",
-      );
-    }, 500);
+    }
   }
 
   return (
@@ -127,6 +136,7 @@ export default function CadastroPage() {
                 <Button
                   texto={carregando ? "Aguarde..." : "Criar conta"}
                   type="submit"
+                  disabled={carregando}
                 />
               </div>
             </form>

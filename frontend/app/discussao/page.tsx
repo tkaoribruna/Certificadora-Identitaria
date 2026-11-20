@@ -1,73 +1,76 @@
-"use client"
+"use client";
 
+import { useState, type FormEvent } from "react";
 import { Container } from "@/components/Container";
 import { Badge } from "@/components/Badge";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
-
-const discussoes = [
-  {
-    id: 1,
-    titulo: "Como começar a estudar cibersegurança?",
-    descricao:
-      "Quais conceitos e ferramentas vocês recomendam para quem está começando na área de segurança da informação?",
-    autor: "Ana Silva",
-    categoria: "Fundamentos",
-    respostas: 12,
-    atividade: "Há 15 minutos",
-  },
-  {
-    id: 2,
-    titulo: "Boas práticas para proteger uma aplicação web",
-    descricao:
-      "Vamos compartilhar práticas importantes para reduzir vulnerabilidades durante o desenvolvimento de aplicações web.",
-    autor: "Lucas Mendes",
-    categoria: "Desenvolvimento seguro",
-    respostas: 8,
-    atividade: "Há 1 hora",
-  },
-  {
-    id: 3,
-    titulo: "Diferenças entre hashing e criptografia",
-    descricao:
-      "Estou estudando proteção de dados e gostaria de entender melhor quando utilizar hashing e quando utilizar criptografia.",
-    autor: "Mariana Costa",
-    categoria: "Criptografia",
-    respostas: 5,
-    atividade: "Há 3 horas",
-  },
-  {
-    id: 4,
-    titulo: "Laboratórios para praticar segurança de redes",
-    descricao:
-      "Quais ambientes de laboratório vocês indicam para aprender análise de tráfego e segurança de redes de forma segura?",
-    autor: "Pedro Oliveira",
-    categoria: "Redes",
-    respostas: 16,
-    atividade: "Ontem",
-  },
-  {
-    id: 5,
-    titulo: "Como reconhecer tentativas de phishing?",
-    descricao:
-      "Quais sinais ajudam a identificar mensagens fraudulentas e quais cuidados devemos tomar antes de abrir links?",
-    autor: "Julia Ferreira",
-    categoria: "Segurança defensiva",
-    respostas: 9,
-    atividade: "Ontem",
-  },
-];
-
-const categorias = [
-  "Todas",
-  "Fundamentos",
-  "Desenvolvimento seguro",
-  "Criptografia",
-  "Redes",
-  "Segurança defensiva",
-];
+import { Alert } from "@/components/Alert";
+import { Input } from "@/components/Input";
+import { Loading } from "@/components/Loading";
+import { Modal } from "@/components/Modal";
+import { RequerLogin } from "@/components/RequerLogin";
+import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import { useApi } from "@/lib/useApi";
+import { tempoDecorrido } from "@/lib/format";
 
 export default function DiscussaoPage() {
+  const { logado, pronto } = useAuth();
+
+  const {
+    dados: topicos,
+    erro,
+    carregando,
+    recarregar,
+  } = useApi(() => api.listarTopicos(), logado);
+
+  const [modalAberto, setModalAberto] = useState(false);
+  const [titulo, setTitulo] = useState("");
+  const [descricao, setDescricao] = useState("");
+  const [erroForm, setErroForm] = useState("");
+  const [enviando, setEnviando] = useState(false);
+  const [aviso, setAviso] = useState("");
+
+  function abrirModal() {
+    setTitulo("");
+    setDescricao("");
+    setErroForm("");
+    setAviso("");
+    setModalAberto(true);
+  }
+
+  async function handleCriar(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setErroForm("");
+
+    if (!titulo.trim() || !descricao.trim()) {
+      setErroForm("Preencha o título e a descrição.");
+      return;
+    }
+
+    setEnviando(true);
+
+    try {
+      const criado = await api.criarTopico(titulo.trim(), descricao.trim());
+      setModalAberto(false);
+
+      if (criado.moderationStatus === "PENDING") {
+        setAviso(
+          "Sua discussão foi enviada para análise e ficará visível para os outros usuários depois de aprovada.",
+        );
+      }
+
+      recarregar();
+    } catch (e) {
+      setErroForm(e instanceof Error ? e.message : "Erro ao criar a discussão.");
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  const lista = topicos ?? [];
+
   return (
     <main className="flex-1 py-16 sm:py-20">
       <Container>
@@ -84,16 +87,11 @@ export default function DiscussaoPage() {
             sobre cibersegurança com outros estudantes.
           </p>
 
-          <div className="mt-7">
-            <Button
-              texto="Criar discussão"
-              onClick={() =>
-                alert(
-                  "A criação de discussões será implementada junto com a integração da API."
-                )
-              }
-            />
-          </div>
+          {logado && (
+            <div className="mt-7">
+              <Button texto="Criar discussão" onClick={abrirModal} />
+            </div>
+          )}
         </section>
 
         <section>
@@ -106,43 +104,67 @@ export default function DiscussaoPage() {
             </p>
           </div>
 
-          <div className="mb-8 flex flex-wrap gap-2">
-            {categorias.map((categoria, indice) => (
-              <Badge
-                key={categoria}
-                variante={indice === 0 ? "primario" : "neutro"}
-              >
-                {categoria}
-              </Badge>
-            ))}
-          </div>
+          {aviso && (
+            <div className="mb-6">
+              <Alert mensagem={aviso} variante="info" />
+            </div>
+          )}
 
-          <div className="grid gap-5">
-            {discussoes.map((discussao) => (
-              <Card key={discussao.id} titulo={discussao.titulo}>
-                <div className="mb-3">
-                  <Badge variante="primario">
-                    {discussao.categoria}
-                  </Badge>
-                </div>
+          {!pronto ? (
+            <Loading />
+          ) : !logado ? (
+            <RequerLogin />
+          ) : carregando ? (
+            <Loading mensagem="Carregando discussões..." />
+          ) : erro ? (
+            <Alert mensagem={erro} variante="erro" />
+          ) : lista.length === 0 ? (
+            <Alert
+              mensagem="Ainda não há discussões. Seja o primeiro a criar uma!"
+              variante="info"
+            />
+          ) : (
+            <div className="grid gap-5">
+              {lista.map((topico) => {
+                const respostas = topico._count?.comments ?? 0;
 
-                <p className="leading-7 text-gray-400">
-                  {discussao.descricao}
-                </p>
+                return (
+                  <Card key={topico.id} titulo={topico.title}>
+                    {topico.moderationStatus === "PENDING" && (
+                      <div className="mb-3">
+                        <Badge variante="aviso">
+                          Em análise — só você e os administradores veem
+                        </Badge>
+                      </div>
+                    )}
 
-                <div className="mt-5 flex flex-col gap-3 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-500">
-                    <span>Por {discussao.autor}</span>
-                    <span>{discussao.atividade}</span>
-                  </div>
+                    <p className="line-clamp-3 whitespace-pre-wrap leading-7 text-gray-400">
+                      {topico.description}
+                    </p>
 
-                  <span className="text-sm text-[#00E5FF]">
-                    {discussao.respostas} respostas
-                  </span>
-                </div>
-              </Card>
-            ))}
-          </div>
+                    <div className="mt-5 flex flex-col gap-3 border-t border-white/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-gray-500">
+                        <span>Por {topico.user?.name ?? "Usuário"}</span>
+                        <span>{tempoDecorrido(topico.createdAt)}</span>
+                      </div>
+
+                      <div className="flex items-center gap-4">
+                        <span className="text-sm text-[#00E5FF]">
+                          {respostas}{" "}
+                          {respostas === 1 ? "resposta" : "respostas"}
+                        </span>
+                        <Button
+                          texto="Ver respostas"
+                          variante="secundario"
+                          href={`/discussao/${topico.id}`}
+                        />
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </section>
 
         <section className="mt-12 rounded-2xl border border-white/10 bg-white/[0.03] p-6 sm:p-8">
@@ -156,6 +178,57 @@ export default function DiscussaoPage() {
           </p>
         </section>
       </Container>
+
+      <Modal
+        titulo="Criar discussão"
+        aberto={modalAberto}
+        onFechar={() => setModalAberto(false)}
+      >
+        <form onSubmit={handleCriar} className="space-y-5">
+          {erroForm && <Alert mensagem={erroForm} variante="erro" />}
+
+          <Input
+            label="Título"
+            name="titulo"
+            placeholder="Sobre o que você quer conversar?"
+            value={titulo}
+            onChange={(event) => setTitulo(event.target.value)}
+            required
+          />
+
+          <div className="flex flex-col gap-2">
+            <label
+              htmlFor="descricao"
+              className="text-sm font-medium text-white"
+            >
+              Descrição
+            </label>
+            <textarea
+              id="descricao"
+              name="descricao"
+              rows={4}
+              placeholder="Explique sua dúvida ou ideia"
+              value={descricao}
+              onChange={(event) => setDescricao(event.target.value)}
+              required
+              className="rounded-lg border border-gray-700 bg-[#0A0F1D] px-4 py-3 text-white outline-none transition-colors placeholder:text-gray-500 focus:border-[#00E5FF]"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <Button
+              texto="Cancelar"
+              variante="secundario"
+              onClick={() => setModalAberto(false)}
+            />
+            <Button
+              texto={enviando ? "Publicando..." : "Publicar"}
+              type="submit"
+              disabled={enviando}
+            />
+          </div>
+        </form>
+      </Modal>
     </main>
   );
 }

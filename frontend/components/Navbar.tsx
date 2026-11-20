@@ -4,17 +4,23 @@ import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Container } from "./Container";
+import { limparSessao, useAuth } from "@/lib/auth";
 
 const links = [
   { href: "/", texto: "Início" },
   { href: "/ensino", texto: "Ensino" },
   { href: "/discussao", texto: "Discussão" },
   { href: "/materiais", texto: "Materiais" },
-  { href: "/login", texto: "Login" },
 ];
 
 export function Navbar() {
   const [menuAberto, setMenuAberto] = useState(false);
+  const { usuario, logado, pronto } = useAuth();
+
+  function sair() {
+    limparSessao();
+    setMenuAberto(false);
+  }
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/5 bg-[#0A0F1D]/90 backdrop-blur-md">
@@ -49,6 +55,38 @@ export function Navbar() {
                   {link.texto}
                 </Link>
               ))}
+
+              {pronto && usuario?.role === "ADMIN" && (
+                <Link
+                  href="/admin/moderacao"
+                  className="text-sm text-[#00E5FF] transition-colors hover:underline"
+                >
+                  Moderação
+                </Link>
+              )}
+
+              {pronto &&
+                (logado ? (
+                  <>
+                    <span className="text-sm text-gray-500">
+                      Olá, {usuario?.name.split(" ")[0]}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={sair}
+                      className="text-sm text-gray-300 transition-colors hover:text-[#00E5FF]"
+                    >
+                      Sair
+                    </button>
+                  </>
+                ) : (
+                  <Link
+                    href="/login"
+                    className="text-sm text-gray-300 transition-colors hover:text-[#00E5FF]"
+                  >
+                    Login
+                  </Link>
+                ))}
             </div>
 
             {/* Botão do menu mobile */}
@@ -82,6 +120,35 @@ export function Navbar() {
                   {link.texto}
                 </Link>
               ))}
+
+              {pronto && usuario?.role === "ADMIN" && (
+                <Link
+                  href="/admin/moderacao"
+                  onClick={() => setMenuAberto(false)}
+                  className="rounded-md py-2 text-sm text-[#00E5FF] transition-colors hover:bg-white/5"
+                >
+                  Moderação
+                </Link>
+              )}
+
+              {pronto &&
+                (logado ? (
+                  <button
+                    type="button"
+                    onClick={sair}
+                    className="rounded-md py-2 text-left text-sm text-gray-300 transition-colors hover:bg-white/5 hover:text-[#00E5FF]"
+                  >
+                    Sair
+                  </button>
+                ) : (
+                  <Link
+                    href="/login"
+                    onClick={() => setMenuAberto(false)}
+                    className="rounded-md py-2 text-sm text-gray-300 transition-colors hover:bg-white/5 hover:text-[#00E5FF]"
+                  >
+                    Login
+                  </Link>
+                ))}
             </div>
           )}
         </Container>

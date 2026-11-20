@@ -4,59 +4,28 @@ import { Container } from "@/components/Container";
 import { Badge } from "@/components/Badge";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
-
-const cursos = [
-  {
-    titulo: "Fundamentos de Cibersegurança",
-    descricao:
-      "Aprenda os conceitos fundamentais de segurança da informação, ameaças digitais e proteção de sistemas.",
-    categoria: "Fundamentos",
-    nivel: "Iniciante",
-    duracao: "4 módulos",
-  },
-  {
-    titulo: "Segurança de Redes",
-    descricao:
-      "Conheça os principais conceitos de redes, protocolos e mecanismos utilizados para proteger conexões.",
-    categoria: "Redes",
-    nivel: "Intermediário",
-    duracao: "6 módulos",
-  },
-  {
-    titulo: "Desenvolvimento Web Seguro",
-    descricao:
-      "Explore vulnerabilidades comuns em aplicações web e boas práticas para desenvolver sistemas mais seguros.",
-    categoria: "Desenvolvimento",
-    nivel: "Intermediário",
-    duracao: "5 módulos",
-  },
-  {
-    titulo: "Criptografia Essencial",
-    descricao:
-      "Entenda como a criptografia contribui para a confidencialidade, integridade e proteção dos dados.",
-    categoria: "Criptografia",
-    nivel: "Intermediário",
-    duracao: "4 módulos",
-  },
-  {
-    titulo: "Engenharia Social",
-    descricao:
-      "Aprenda a reconhecer tentativas de manipulação, phishing e outras técnicas de engenharia social.",
-    categoria: "Ameaças",
-    nivel: "Iniciante",
-    duracao: "3 módulos",
-  },
-  {
-    titulo: "Introdução ao Pentest",
-    descricao:
-      "Conheça as etapas de uma avaliação de segurança realizada em ambientes autorizados.",
-    categoria: "Segurança ofensiva",
-    nivel: "Avançado",
-    duracao: "7 módulos",
-  },
-];
+import { Alert } from "@/components/Alert";
+import { Loading } from "@/components/Loading";
+import { RequerLogin } from "@/components/RequerLogin";
+import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import { useApi } from "@/lib/useApi";
 
 export default function EnsinoPage() {
+  const { logado, pronto } = useAuth();
+
+  const { dados: modulos, erro, carregando } = useApi(
+    () => Promise.all([api.listarModulos(), api.listarMateriais()]),
+    logado,
+  );
+
+  const lista = modulos?.[0] ?? [];
+  const materiais = modulos?.[1] ?? [];
+
+  function contarMateriais(moduloId: number) {
+    return materiais.filter((m) => m.moduleId === moduloId).length;
+  }
+
   return (
     <main className="flex-1 py-16 sm:py-20">
       <Container>
@@ -78,48 +47,57 @@ export default function EnsinoPage() {
           <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
               <h2 className="font-heading text-2xl font-semibold text-white">
-                Conteúdos disponíveis
+                Módulos disponíveis
               </h2>
               <p className="mt-2 text-sm text-gray-400">
                 Explore os temas e escolha por onde começar.
               </p>
             </div>
 
-            <span className="text-sm text-gray-500">
-              {cursos.length} conteúdos demonstrativos
-            </span>
+            {logado && !carregando && !erro && (
+              <span className="text-sm text-gray-500">
+                {lista.length} {lista.length === 1 ? "módulo" : "módulos"}
+              </span>
+            )}
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {cursos.map((curso) => (
-              <Card key={curso.titulo} titulo={curso.titulo}>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variante="primario">{curso.categoria}</Badge>
-                  <Badge variante="neutro">{curso.nivel}</Badge>
-                </div>
+          {!pronto ? (
+            <Loading />
+          ) : !logado ? (
+            <RequerLogin />
+          ) : carregando ? (
+            <Loading mensagem="Carregando módulos..." />
+          ) : erro ? (
+            <Alert mensagem={erro} variante="erro" />
+          ) : lista.length === 0 ? (
+            <Alert mensagem="Nenhum módulo cadastrado ainda." variante="info" />
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {lista.map((modulo) => {
+                const total = contarMateriais(modulo.id);
 
-                <p className="mt-4 min-h-20 leading-7 text-gray-400">
-                  {curso.descricao}
-                </p>
+                return (
+                  <Card key={modulo.id} titulo={modulo.title}>
+                    <p className="min-h-20 leading-7 text-gray-400">
+                      {modulo.description}
+                    </p>
 
-                <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
-                  <span className="text-sm text-gray-500">
-                    {curso.duracao}
-                  </span>
+                    <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
+                      <span className="text-sm text-gray-500">
+                        {total} {total === 1 ? "material" : "materiais"}
+                      </span>
 
-                  <Button
-                    texto="Explorar"
-                    variante="secundario"
-                    onClick={() =>
-                      alert(
-                        "Este conteúdo é demonstrativo. O acesso será implementado nas próximas etapas."
-                      )
-                    }
-                  />
-                </div>
-              </Card>
-            ))}
-          </div>
+                      <Button
+                        texto="Ver materiais"
+                        variante="secundario"
+                        href="/materiais"
+                      />
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </section>
 
         <section className="mt-16 rounded-2xl border border-[#00E5FF]/20 bg-[#00E5FF]/5 p-6 sm:p-8">

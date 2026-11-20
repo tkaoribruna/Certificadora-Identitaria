@@ -1,68 +1,37 @@
-"use client"
+"use client";
 
 import { Container } from "@/components/Container";
 import { Badge } from "@/components/Badge";
 import { Card } from "@/components/Card";
 import { Button } from "@/components/Button";
+import { Alert } from "@/components/Alert";
+import { Loading } from "@/components/Loading";
+import { RequerLogin } from "@/components/RequerLogin";
+import { api } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import { useApi } from "@/lib/useApi";
 
-const materiais = [
-  {
-    id: 1,
-    titulo: "Guia de Fundamentos de Cibersegurança",
-    descricao:
-      "Um material introdutório sobre conceitos de segurança da informação, ameaças digitais e medidas de proteção.",
-    categoria: "Fundamentos",
-    tipo: "Guia",
-    formato: "Leitura",
-  },
-  {
-    id: 2,
-    titulo: "Introdução à Segurança de Redes",
-    descricao:
-      "Conheça conceitos de redes, protocolos e práticas que ajudam a proteger a comunicação entre dispositivos.",
-    categoria: "Redes",
-    tipo: "Apostila",
-    formato: "Leitura",
-  },
-  {
-    id: 3,
-    titulo: "Checklist de Desenvolvimento Seguro",
-    descricao:
-      "Uma lista de verificação para apoiar a identificação de riscos e a adoção de boas práticas no desenvolvimento web.",
-    categoria: "Desenvolvimento seguro",
-    tipo: "Checklist",
-    formato: "Referência",
-  },
-  {
-    id: 4,
-    titulo: "Conceitos Essenciais de Criptografia",
-    descricao:
-      "Revise os conceitos de hashing, criptografia simétrica e assimétrica e suas aplicações na proteção de dados.",
-    categoria: "Criptografia",
-    tipo: "Resumo",
-    formato: "Leitura",
-  },
-  {
-    id: 5,
-    titulo: "Guia de Identificação de Phishing",
-    descricao:
-      "Aprenda a reconhecer sinais comuns de mensagens fraudulentas e a avaliar links e solicitações suspeitas.",
-    categoria: "Segurança defensiva",
-    tipo: "Guia",
-    formato: "Referência",
-  },
-  {
-    id: 6,
-    titulo: "Laboratório de Segurança em Ambiente Controlado",
-    descricao:
-      "Uma proposta de estudo prático para explorar conceitos de segurança em um ambiente próprio e autorizado.",
-    categoria: "Prática",
-    tipo: "Laboratório",
-    formato: "Prática",
-  },
-];
+const tipos = {
+  VIDEO: { nome: "Vídeo", formato: "Assistir" },
+  SLIDE: { nome: "Slides", formato: "Apresentação" },
+  DOCUMENT: { nome: "Documento", formato: "Leitura" },
+} as const;
 
 export default function MateriaisPage() {
+  const { logado, pronto } = useAuth();
+
+  const { dados, erro, carregando } = useApi(
+    () => Promise.all([api.listarMateriais(), api.listarModulos()]),
+    logado,
+  );
+
+  const materiais = dados?.[0] ?? [];
+  const modulos = dados?.[1] ?? [];
+
+  function nomeDoModulo(moduloId: number) {
+    return modulos.find((m) => m.id === moduloId)?.title ?? "Módulo";
+  }
+
   return (
     <main className="flex-1 py-16 sm:py-20">
       <Container>
@@ -91,36 +60,51 @@ export default function MateriaisPage() {
             </p>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {materiais.map((material) => (
-              <Card key={material.id} titulo={material.titulo}>
-                <div className="flex flex-wrap gap-2">
-                  <Badge variante="primario">{material.categoria}</Badge>
-                  <Badge variante="neutro">{material.tipo}</Badge>
-                </div>
+          {!pronto ? (
+            <Loading />
+          ) : !logado ? (
+            <RequerLogin />
+          ) : carregando ? (
+            <Loading mensagem="Carregando materiais..." />
+          ) : erro ? (
+            <Alert mensagem={erro} variante="erro" />
+          ) : materiais.length === 0 ? (
+            <Alert
+              mensagem="Nenhum material cadastrado ainda."
+              variante="info"
+            />
+          ) : (
+            <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+              {materiais.map((material) => {
+                const tipo = tipos[material.type];
 
-                <p className="mt-4 min-h-20 leading-7 text-gray-400">
-                  {material.descricao}
-                </p>
+                return (
+                  <Card key={material.id} titulo={material.title}>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variante="primario">
+                        {nomeDoModulo(material.moduleId)}
+                      </Badge>
+                      <Badge variante="neutro">{tipo.nome}</Badge>
+                    </div>
 
-                <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
-                  <span className="text-sm text-gray-500">
-                    {material.formato}
-                  </span>
+                    <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
+                      <span className="text-sm text-gray-500">
+                        {tipo.formato}
+                      </span>
 
-                  <Button
-                    texto="Acessar material"
-                    variante="secundario"
-                    onClick={() =>
-                      alert(
-                        "O acesso aos materiais será implementado na integração com a API."
-                      )
-                    }
-                  />
-                </div>
-              </Card>
-            ))}
-          </div>
+                      <Button
+                        texto="Acessar material"
+                        variante="secundario"
+                        onClick={() =>
+                          window.open(material.url, "_blank", "noopener")
+                        }
+                      />
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
         </section>
 
         <section className="mt-16 rounded-2xl border border-[#00E5FF]/20 bg-[#00E5FF]/5 p-6 sm:p-8">

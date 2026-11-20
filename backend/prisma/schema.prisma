@@ -67,8 +67,11 @@ enum MaterialType{
 model DiscussionTopic {
   id Int @id @default(autoincrement())
   title String
-  description String
+  description String @db.Text
   createdAt DateTime @default(now())
+
+  moderationStatus ModerationStatus @default(APPROVED)
+  moderationReason String? @db.VarChar(500)
 
   userId Int
   user User @relation(fields: [userId], references: [id])
@@ -103,8 +106,11 @@ enum SubmissionStatus {
 
 model Comment {
   id Int @id @default(autoincrement())
-  content String
+  content String @db.Text
   createdAt DateTime @default(now())
+
+  moderationStatus ModerationStatus @default(APPROVED)
+  moderationReason String? @db.VarChar(500)
 
   userId Int
   user User @relation(fields: [userId], references: [id])
@@ -116,3 +122,9 @@ model Comment {
   discussionTopic DiscussionTopic? @relation(fields: [discussionTopicId], references: [id])
 }
 
+// Resultado da moderação automática/manual de tópicos e comentários
+enum ModerationStatus {
+  APPROVED
+  PENDING
+  REJECTED
+}

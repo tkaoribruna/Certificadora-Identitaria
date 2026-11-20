@@ -5,6 +5,15 @@ const discussionTopicService = require('../services/discussionTopicService');
 
 // Trata os erros das operações
 function handleError(res, error, action) {
+    if (error.statusCode) {
+        return res.status(error.statusCode).json({
+            error: error.message,
+            ...(error.moderationStatus && {
+                moderationStatus: error.moderationStatus
+            })
+        });
+    }
+
     const validationErrors = [
         'ID inválido.',
         'Título e descrição são obrigatórios.'
@@ -67,7 +76,7 @@ async function createTopic(req, res) {
 // Lista todos os tópicos
 async function listTopics(req, res) {
     try {
-        const topics = await discussionTopicService.listTopics();
+        const topics = await discussionTopicService.listTopics(req.user);
 
         return res.status(200).json(topics);
     } catch (error) {
@@ -80,7 +89,7 @@ async function getTopicById(req, res) {
     try {
         const id = Number(req.params.id);
 
-        const topic = await discussionTopicService.getTopicById(id);
+        const topic = await discussionTopicService.getTopicById(id, req.user);
 
         return res.status(200).json(topic);
     } catch (error) {
@@ -93,7 +102,10 @@ async function listTopicsByUser(req, res) {
     try {
         const userId = Number(req.params.userId);
 
-        const topics = await discussionTopicService.listTopicsByUser(userId);
+        const topics = await discussionTopicService.listTopicsByUser(
+            userId,
+            req.user
+        );
 
         return res.status(200).json(topics);
     } catch (error) {
