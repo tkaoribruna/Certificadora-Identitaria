@@ -14,6 +14,8 @@ const learningMaterialRoutes = require('./routes/learningMaterialRoutes');
 const discussionTopicRoutes = require('./routes/discussionTopicRoutes');
 const commentRoutes = require('./routes/commentRoutes');
 const communitySubmissionRoutes = require('./routes/communitySubmissionRoutes');
+const moderationRoutes = require('./routes/moderationRoutes');
+const moderationService = require('./services/moderationService');
 
 const app = express();
 
@@ -36,8 +38,10 @@ app.use(learningMaterialRoutes);
 app.use(discussionTopicRoutes);
 app.use(commentRoutes);
 app.use(communitySubmissionRoutes);
+app.use(moderationRoutes);
 
 // Inicia o servidor
 app.listen(PORT, () => {
     console.log(`Servidor rodando em http://localhost:${PORT}`);
+    console.log(`Moderação de conteúdo: ${moderationService.describeSetup()}`);
 });

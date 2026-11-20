@@ -6,6 +6,7 @@ const router = express.Router();
 
 const discussionTopicController = require('../controllers/discussionTopicController');
 const authMiddleware = require('../middlewares/authMiddleware');
+const { postingLimiter } = require('../middlewares/rateLimitMiddleware');
 
 /**
  * @swagger
@@ -35,15 +36,20 @@ const authMiddleware = require('../middlewares/authMiddleware');
  *                 example: Espaço para discutir conceitos de segurança digital.
  *     responses:
  *       201:
- *         description: Tópico cadastrado com sucesso.
+ *         description: Tópico cadastrado. Se "moderationStatus" for PENDING, ele aguarda revisão de um administrador e só aparece para o autor.
  *       400:
  *         description: Dados inválidos.
+ *       422:
+ *         description: Conteúdo bloqueado pela moderação automática.
+ *       429:
+ *         description: Muitas publicações em pouco tempo.
  *       401:
  *         description: Token ausente, inválido ou expirado.
  */
 router.post(
     '/api/topics',
     authMiddleware,
+    postingLimiter,
     discussionTopicController.createTopic
 );
 
@@ -178,6 +184,7 @@ router.get(
 router.put(
     '/api/topics/:id',
     authMiddleware,
+    postingLimiter,
     discussionTopicController.updateTopic
 );
 

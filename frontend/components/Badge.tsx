@@ -1,6 +1,6 @@
 type BadgeProps = {
   children: React.ReactNode;
-  variante?: "primario" | "sucesso" | "aviso";
+  variante?: "primario" | "sucesso" | "aviso" | "neutro";
 };
 
 export function Badge({
@@ -11,6 +11,7 @@ export function Badge({
     primario: "bg-[#6366F1]/20 text-[#A5B4FC]",
     sucesso: "bg-[#10B981]/20 text-[#10B981]",
     aviso: "bg-yellow-500/20 text-yellow-400",
+    neutro: "bg-white/10 text-gray-300",
   };
 
   return (

@@ -37,7 +37,8 @@ const options = {
             { name: 'Materiais', description: 'Materiais de aprendizagem' },
             { name: 'Tópicos', description: 'Tópicos de discussão' },
             { name: 'Comentários', description: 'Comentários da plataforma' },
-            { name: 'Submissões', description: 'Envios e moderação de conteúdos' }
+            { name: 'Submissões', description: 'Envios e moderação de conteúdos' },
+            { name: 'Moderação', description: 'Fila de revisão de tópicos e comentários (administradores)' }
         ]
     },
 

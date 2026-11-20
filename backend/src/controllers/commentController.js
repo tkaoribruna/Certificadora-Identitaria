@@ -5,6 +5,15 @@ const commentService = require('../services/commentService');
 
 // Trata os erros das operações
 function handleError(res, error, action) {
+    if (error.statusCode) {
+        return res.status(error.statusCode).json({
+            error: error.message,
+            ...(error.moderationStatus && {
+                moderationStatus: error.moderationStatus
+            })
+        });
+    }
+
     const validationErrors = [
         'ID inválido.',
         'O conteúdo do comentário é obrigatório.',
@@ -72,7 +81,7 @@ async function createComment(req, res) {
 // Lista todos os comentários
 async function listComments(req, res) {
     try {
-        const comments = await commentService.listComments();
+        const comments = await commentService.listComments(req.user);
 
         return res.status(200).json(comments);
     } catch (error) {
@@ -85,7 +94,7 @@ async function getCommentById(req, res) {
     try {
         const id = Number(req.params.id);
 
-        const comment = await commentService.getCommentById(id);
+        const comment = await commentService.getCommentById(id, req.user);
 
         return res.status(200).json(comment);
     } catch (error) {
@@ -99,7 +108,8 @@ async function listCommentsByMaterial(req, res) {
         const materialId = Number(req.params.materialId);
 
         const comments = await commentService.listCommentsByMaterial(
-            materialId
+            materialId,
+            req.user
         );
 
         return res.status(200).json(comments);
@@ -113,7 +123,10 @@ async function listCommentsByTopic(req, res) {
     try {
         const topicId = Number(req.params.topicId);
 
-        const comments = await commentService.listCommentsByTopic(topicId);
+        const comments = await commentService.listCommentsByTopic(
+            topicId,
+            req.user
+        );
 
         return res.status(200).json(comments);
     } catch (error) {

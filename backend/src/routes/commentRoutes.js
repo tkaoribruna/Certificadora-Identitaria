@@ -6,6 +6,7 @@ const router = express.Router();
 
 const commentController = require('../controllers/commentController');
 const authMiddleware = require('../middlewares/authMiddleware');
+const { postingLimiter } = require('../middlewares/rateLimitMiddleware');
 
 // Todas as rotas abaixo exigem autenticação
 router.use(authMiddleware);
@@ -45,6 +46,10 @@ router.use(authMiddleware);
  *         description: Comentário cadastrado com sucesso.
  *       400:
  *         description: Dados inválidos ou associação incorreta.
+ *       422:
+ *         description: Conteúdo bloqueado pela moderação automática.
+ *       429:
+ *         description: Muitas publicações em pouco tempo.
  *       401:
  *         description: Token ausente, inválido ou expirado.
  *       404:
@@ -52,6 +57,7 @@ router.use(authMiddleware);
  */
 router.post(
     '/api/comments',
+    postingLimiter,
     commentController.createComment
 );
 
@@ -210,6 +216,7 @@ router.get(
  */
 router.put(
     '/api/comments/:id',
+    postingLimiter,
     commentController.updateComment
 );
 
